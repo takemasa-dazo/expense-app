@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>経費承認</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+  :root {
+    --bg:#f5f4f0;--surface:#fff;--border:rgba(0,0,0,0.1);--border-strong:rgba(0,0,0,0.2);
+    --text:#1a1a1a;--text-muted:#888;--text-hint:#bbb;--accent:#1a1a1a;
+    --blue-bg:#e8f0fe;--blue-text:#1a56db;--green-bg:#e3f5e9;--green-text:#1a7d3a;
+    --amber-bg:#fff8e1;--amber-text:#a05e00;--red-bg:#fde8e8;--red-text:#c81e1e;
+    --radius:10px;--radius-lg:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50}
+  .logo{font-size:16px;font-weight:700}
+  .logo span{color:var(--text-muted);font-weight:400}
+  .main{max-width:520px;margin:0 auto;padding:16px}
+  .pw-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px}
+  .pw-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:28px 24px;width:100%;max-width:340px;text-align:center}
+  .pw-icon{font-size:40px;margin-bottom:12px;display:block}
+  .pw-title{font-size:18px;font-weight:700;margin-bottom:6px}
+  .pw-sub{font-size:13px;color:var(--text-muted);margin-bottom:20px}
+  .pw-input{width:100%;padding:12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:16px;font-family:inherit;text-align:center;letter-spacing:4px;outline:none;margin-bottom:10px}
+  .pw-input:focus{border-color:var(--accent)}
+  .pw-btn{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-family:inherit;font-weight:700;cursor:pointer}
+  .pw-error{color:var(--red-text);font-size:13px;display:none}
+  .pw-error.on{display:block}
+  .gas-banner{background:var(--amber-bg);border:1px solid rgba(160,94,0,0.2);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--amber-text)}
+  .gas-banner input{width:100%;margin-top:8px;padding:8px 10px;border:1px solid rgba(160,94,0,0.3);border-radius:var(--radius);font-size:13px;font-family:inherit;background:#fff;color:var(--text)}
+  .gas-banner .save-btn{margin-top:8px;padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-family:inherit;font-weight:500;cursor:pointer}
+  .connected-badge{background:var(--green-bg);border:1px solid rgba(26,125,58,0.2);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--green-text);display:none;align-items:center;gap:8px}
+  .connected-badge.on{display:flex}
+  .tabs{display:flex;background:var(--surface);border-radius:var(--radius-lg);padding:4px;gap:2px;margin-bottom:16px;border:1px solid var(--border)}
+  .tab{flex:1;padding:9px 8px;border-radius:var(--radius);text-align:center;cursor:pointer;font-size:13px;color:var(--text-muted);display:flex;align-items:center;justify-content:center;gap:4px;transition:all 0.15s}
+  .tab.active{background:var(--accent);color:#fff;font-weight:500}
+  .tab .badge{background:#e53e3e;color:#fff;border-radius:20px;padding:0 5px;font-size:10px;min-width:16px;height:16px;display:none;align-items:center;justify-content:center}
+  .tab .badge.on{display:flex}
+  .tab.active .badge{background:rgba(255,255,255,0.3)}
+  .view{display:none}.view.active{display:block}
+  .card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:16px;margin-bottom:12px}
+  .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px}
+  .stat-label{font-size:11px;color:var(--text-muted);font-weight:700;letter-spacing:0.3px;margin-bottom:4px}
+  .stat-val{font-size:22px;font-weight:700}
+  .list-item{padding:12px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center}
+  .list-item:last-child{border-bottom:none;padding-bottom:0}
+  .thumb-ph{width:38px;height:38px;border-radius:var(--radius);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .pill{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+  .pill-pending{background:var(--amber-bg);color:var(--amber-text)}
+  .pill-step2{background:var(--blue-bg);color:var(--blue-text)}
+  .pill-approved{background:var(--green-bg);color:var(--green-text)}
+  .pill-rejected{background:var(--red-bg);color:var(--red-text)}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;justify-content:center}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:20px;animation:slideUp 0.2s ease}
+  @keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .modal-handle{width:40px;height:4px;background:var(--border-strong);border-radius:4px;margin:0 auto 16px}
+  .detail-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;gap:12px}
+  .detail-row:last-of-type{border-bottom:none}
+  .detail-label{color:var(--text-muted);flex-shrink:0}
+  .detail-val{text-align:right;font-weight:500}
+  .flow{display:flex;align-items:center;gap:4px;margin:10px 0;font-size:12px;flex-wrap:wrap}
+  .fs{padding:4px 10px;border-radius:20px;border:1px solid var(--border-strong);color:var(--text-muted)}
+  .fs.done{background:var(--green-bg);color:var(--green-text);border-color:transparent}
+  .fs.cur{background:var(--blue-bg);color:var(--blue-text);border-color:transparent;font-weight:700}
+  .fa{color:var(--text-hint);font-size:12px}
+  .btn{padding:10px 18px;border-radius:var(--radius);cursor:pointer;font-size:14px;font-family:inherit;font-weight:500;display:inline-flex;align-items:center;gap:6px;border:none}
+  .btn-outline{background:transparent;border:1px solid var(--border-strong);color:var(--text)}
+  .btn-green{background:var(--green-bg);color:var(--green-text)}
+  .btn-red{background:var(--red-bg);color:var(--red-text)}
+  .btn-sm{padding:7px 13px;font-size:13px}
+  .reload-btn{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer;margin-bottom:10px}
+  .empty{text-align:center;padding:32px 0;color:var(--text-muted);font-size:13px}
+  .empty .e-icon{font-size:36px;display:block;margin-bottom:8px;opacity:0.4}
+  .toast-wrap{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:200;pointer-events:none}
+  .toast{background:var(--accent);color:#fff;padding:10px 20px;border-radius:40px;font-size:13px;font-weight:500;display:none;white-space:nowrap}
+  #app{display:none}
+</style>
+</head>
+<body>
+<div id="pw-screen" class="pw-screen">
+  <div class="pw-card">
+    <span class="pw-icon">🔐</span>
+    <div class="pw-title">承認者専用ページ</div>
+    <div class="pw-sub">パスワードを入力してください</div>
+    <input type="password" class="pw-input" id="pw-input" placeholder="••••" onkeydown="if(event.key==='Enter')checkPw()">
+    <button class="pw-btn" onclick="checkPw()">ログイン</button>
+    <div class="pw-error" id="pw-error">パスワードが違います</div>
+  </div>
+</div>
+<div id="app">
+  <header>
+    <span style="font-size:22px">✅</span>
+    <div class="logo">経費承認 <span>/ 承認者専用</span></div>
+    <button onclick="logout()" style="margin-left:auto;background:none;border:1px solid var(--border-strong);border-radius:var(--radius);padding:5px 12px;font-size:12px;cursor:pointer;color:var(--text-muted)">ログアウト</button>
+  </header>
+  <div class="main">
+    <div class="gas-banner" id="gas-banner">
+      <strong>⚙️ 初回設定：Google Apps Script の URL を入力</strong>
+      <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/...">
+      <button class="save-btn" onclick="saveGasUrl()">保存して接続</button>
+    </div>
+    <div class="connected-badge" id="connected-badge">
+      ✅ <strong>スプレッドシート接続済み</strong>
+      <button onclick="resetGasUrl()" style="margin-left:auto;background:none;border:none;color:var(--green-text);cursor:pointer;font-size:12px">変更</button>
+    </div>
+    <div class="tabs">
+      <div class="tab active" onclick="sw('approve')">✅ 承認<div class="badge" id="nd">0</div></div>
+      <div class="tab" onclick="sw('list')">📊 一覧</div>
+    </div>
+    <div class="view active" id="view-approve">
+      <div class="stat-row">
+        <div class="stat"><div class="stat-label">1次待ち</div><div class="stat-val" id="s-p1" style="color:var(--amber-text)">0</div></div>
+        <div class="stat"><div class="stat-label">2次待ち</div><div class="stat-val" id="s-p2" style="color:var(--blue-text)">0</div></div>
+        <div class="stat"><div class="stat-label">承認済み</div><div class="stat-val" id="s-done" style="color:var(--green-text)">0</div></div>
+      </div>
+      <div onclick="loadAll()" class="reload-btn">🔄 最新データを読み込む</div>
+      <div class="card" id="approve-list"><div class="empty"><span class="e-icon">✅</span>承認待ちの申請はありません</div></div>
+    </div>
+    <div class="view" id="view-list">
+      <div class="stat-row">
+        <div class="stat"><div class="stat-label">総申請数</div><div class="stat-val" id="s-total">0</div></div>
+        <div class="stat"><div class="stat-label">承認済み合計</div><div class="stat-val" id="s-sum" style="font-size:15px;padding-top:4px">¥0</div></div>
+        <div class="stat"><div class="stat-label">却下数</div><div class="stat-val" id="s-rej" style="color:var(--red-text)">0</div></div>
+      </div>
+      <div onclick="loadAll()" class="reload-btn">🔄 最新データを読み込む</div>
+      <div class="card" id="all-list"><div class="empty"><span class="e-icon">📊</span>申請はまだありません</div></div>
+    </div>
+  </div>
+</div>
+<div class="modal-bg" id="modal-bg" onclick="bgClick(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="modal-body"></div>
+    <div id="modal-btns" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"></div>
+  </div>
+</div>
+<div class="toast-wrap"><div class="toast" id="toast"></div></div>
+<script>
+const PASSWORD='keiri2024';
+let submitted=[],gasUrl=localStorage.getItem('gasUrl')||'';
+function checkPw(){const v=document.getElementById('pw-input').value;if(v===PASSWORD){document.getElementById('pw-screen').style.display='none';document.getElementById('app').style.display='block';sessionStorage.setItem('approved','1');initBanner();}else{document.getElementById('pw-error').classList.add('on');document.getElementById('pw-input').value='';}}
+function logout(){sessionStorage.removeItem('approved');document.getElementById('pw-screen').style.display='flex';document.getElementById('app').style.display='none';}
+if(sessionStorage.getItem('approved')==='1'){document.getElementById('pw-screen').style.display='none';document.getElementById('app').style.display='block';}
+function initBanner(){if(gasUrl){document.getElementById('gas-banner').style.display='none';document.getElementById('connected-badge').classList.add('on');loadAll();}else{document.getElementById('gas-banner').style.display='block';document.getElementById('connected-badge').classList.remove('on');}}
+function saveGasUrl(){const v=document.getElementById('gas-url-input').value.trim();if(!v){toast('URLを入力してください');return;}gasUrl=v;localStorage.setItem('gasUrl',v);initBanner();toast('接続しました ✓');}
+function resetGasUrl(){gasUrl='';localStorage.removeItem('gasUrl');initBanner();}
+if(sessionStorage.getItem('approved')==='1')initBanner();
+function sw(t){['approve','list'].forEach((v,i)=>{document.getElementById('view-'+v).classList.toggle('active',v===t);document.querySelectorAll('.tab')[i].classList.toggle('active',v===t);});if(t==='approve')renderApprove();if(t==='list')renderList();}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',2400);}
+function updateBadge(){const n=submitted.filter(r=>r.status==='pending').length;const b=document.getElementById('nd');b.textContent=n;b.classList.toggle('on',n>0);}
+async function gasPost(body){if(!gasUrl)return null;try{const res=await fetch(gasUrl,{method:'POST',body:JSON.stringify(body)});return await res.json();}catch(e){return null;}}
+async function loadAll(){if(!gasUrl)return;const res=await gasPost({action:'getAll'});if(res&&res.data){submitted=res.data.map(r=>({id:r.id,name:r.name,date:r.date,cat:r.cat,store:r.store,amount:Number(r.amount),desc:r.desc,status:r.status==='承認済み'?'approved':r.status==='却下'?'rejected':'pending',step:r.status==='2次承認待ち'?2:1}));updateBadge();renderApprove();renderList();}}
+function pill(r){if(r.status==='rejected')return'<span class="pill pill-rejected">却下</span>';if(r.status==='approved')return'<span class="pill pill-approved">承認済み</span>';if(r.step===2)return'<span class="pill pill-step2">2次承認待ち</span>';return'<span class="pill pill-pending">1次承認待ち</span>';}
+function renderApprove(){const pend=submitted.filter(r=>r.status==='pending');document.getElementById('s-p1').textContent=pend.filter(r=>r.step===1).length;document.getElementById('s-p2').textContent=pend.filter(r=>r.step===2).length;document.getElementById('s-done').textContent=submitted.filter(r=>r.status==='approved').length;const el=document.getElementById('approve-list');if(!pend.length){el.innerHTML='<div class="empty"><span class="e-icon">✅</span>承認待ちの申請はありません</div>';return;}el.innerHTML=pend.map(r=>`<div class="list-item"><div class="thumb-ph">🧾</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-weight:500">${r.name}</span>${pill(r)}</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">${r.date} ／ ${r.cat} ／ ¥${r.amount.toLocaleString()}</div></div><button class="btn btn-outline btn-sm" onclick="openModal('${r.id}')">詳細</button></div>`).join('');}
+function renderList(){document.getElementById('s-total').textContent=submitted.length;const app=submitted.filter(r=>r.status==='approved');document.getElementById('s-sum').textContent='¥'+app.reduce((a,r)=>a+r.amount,0).toLocaleString();document.getElementById('s-rej').textContent=submitted.filter(r=>r.status==='rejected').length;const el=document.getElementById('all-list');if(!submitted.length){el.innerHTML='<div class="empty"><span class="e-icon">📊</span>申請はまだありません</div>';return;}el.innerHTML=submitted.map(r=>`<div class="list-item"><div class="thumb-ph">🧾</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-weight:500">${r.name}</span>${pill(r)}</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">${r.date} ／ ${r.store||r.cat}</div></div><div style="text-align:right;flex-shrink:0"><div style="font-weight:700">¥${r.amount.toLocaleString()}</div><button class="btn btn-outline btn-sm" style="margin-top:5px" onclick="openModal('${r.id}')">詳細</button></div></div>`).join('');}
+function openModal(id){const r=submitted.find(x=>String(x.id)===String(id));if(!r)return;const s=r.status,st=r.step;const flow=[`<span class="fs done">申請</span><span class="fa">›</span>`,`<span class="fs ${s==='rejected'?'':(st>=2||s==='approved'?'done':'cur')}">1次（上司）</span><span class="fa">›</span>`,`<span class="fs ${s==='approved'?'done':(st===2&&s==='pending'?'cur':'')}">2次（経理）</span><span class="fa">›</span>`,`<span class="fs ${s==='approved'?'done':''}">完了</span>`].join('');document.getElementById('modal-body').innerHTML=`<div class="flow">${flow}</div><div style="margin-top:12px"><div class="detail-row"><span class="detail-label">申請者</span><span class="detail-val">${r.name}</span></div><div class="detail-row"><span class="detail-label">日付</span><span class="detail-val">${r.date}</span></div><div class="detail-row"><span class="detail-label">カテゴリ</span><span class="detail-val">${r.cat}</span></div><div class="detail-row"><span class="detail-label">店舗</span><span class="detail-val">${r.store||'—'}</span></div><div class="detail-row"><span class="detail-label">金額</span><span class="detail-val" style="font-size:18px">¥${r.amount.toLocaleString()}</span></div><div class="detail-row"><span class="detail-label">目的</span><span class="detail-val">${r.desc||'—'}</span></div><div class="detail-row"><span class="detail-label">ステータス</span><span class="detail-val">${pill(r)}</span></div></div>`;const btns=document.getElementById('modal-btns');if(r.status==='pending'){const lbl=r.step===1?'1次承認（上司）':'2次承認（経理）';btns.innerHTML=`<button class="btn btn-green" onclick="approve('${r.id}')">✓ ${lbl}</button><button class="btn btn-red" onclick="reject('${r.id}')">✕ 却下</button><button class="btn btn-outline btn-sm" onclick="closeModal()" style="margin-left:auto">閉じる</button>`;}else{btns.innerHTML=`<button class="btn btn-outline" onclick="closeModal()" style="margin-left:auto">閉じる</button>`;}document.getElementById('modal-bg').classList.add('open');}
+function bgClick(e){if(e.target===document.getElementById('modal-bg'))closeModal();}
+function closeModal(){document.getElementById('modal-bg').classList.remove('open');}
+async function approve(id){const r=submitted.find(x=>String(x.id)===String(id));if(!r)return;if(r.step===1){r.step=2;toast('1次承認しました');}else{r.status='approved';toast('最終承認完了 ✓');}if(gasUrl)await gasPost({action:'approve',id:r.id});closeModal();updateBadge();renderApprove();}
+async function reject(id){const r=submitted.find(x=>String(x.id)===String(id));if(!r)return;r.status='rejected';toast('却下しました');if(gasUrl)await gasPost({action:'reject',id:r.id});closeModal();updateBadge();renderApprove();}
+</script>
+</body>
+</html>
