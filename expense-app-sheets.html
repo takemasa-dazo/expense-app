@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>経費精算</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.1);
+    --border-strong: rgba(0,0,0,0.2);
+    --text: #1a1a1a;
+    --text-muted: #888;
+    --text-hint: #bbb;
+    --accent: #1a1a1a;
+    --blue-bg: #e8f0fe; --blue-text: #1a56db;
+    --green-bg: #e3f5e9; --green-text: #1a7d3a;
+    --amber-bg: #fff8e1; --amber-text: #a05e00;
+    --red-bg: #fde8e8; --red-text: #c81e1e;
+    --radius: 10px; --radius-lg: 14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50}
+  header .logo{font-size:16px;font-weight:700}
+  header .logo span{color:var(--text-muted);font-weight:400}
+  .gas-banner{background:var(--amber-bg);border:1px solid rgba(160,94,0,0.2);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--amber-text)}
+  .gas-banner input{width:100%;margin-top:8px;padding:8px 10px;border:1px solid rgba(160,94,0,0.3);border-radius:var(--radius);font-size:13px;font-family:inherit;background:#fff;color:var(--text)}
+  .gas-banner .save-btn{margin-top:8px;padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-family:inherit;font-weight:500;cursor:pointer}
+  .connected-badge{background:var(--green-bg);border:1px solid rgba(26,125,58,0.2);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--green-text);display:none;align-items:center;gap:8px}
+  .connected-badge.on{display:flex}
+  .main{max-width:520px;margin:0 auto;padding:16px}
+  .tabs{display:flex;background:var(--surface);border-radius:var(--radius-lg);padding:4px;gap:2px;margin-bottom:16px;border:1px solid var(--border)}
+  .tab{flex:1;padding:9px 8px;border-radius:var(--radius);text-align:center;cursor:pointer;font-size:13px;color:var(--text-muted);display:flex;align-items:center;justify-content:center;gap:4px;transition:all 0.15s;position:relative}
+  .tab.active{background:var(--accent);color:#fff;font-weight:500}
+  .tab .badge{background:#e53e3e;color:#fff;border-radius:20px;padding:0 5px;font-size:10px;min-width:16px;height:16px;display:none;align-items:center;justify-content:center}
+  .tab .badge.on{display:flex}
+  .tab.active .badge{background:rgba(255,255,255,0.3)}
+  .view{display:none}
+  .view.active{display:block}
+  .card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:16px;margin-bottom:12px}
+  .drop-zone{border:2px dashed var(--border-strong);border-radius:var(--radius-lg);padding:32px 20px;text-align:center;cursor:pointer;transition:background 0.15s}
+  .drop-zone:hover,.drop-zone.drag{background:var(--bg)}
+  .drop-zone .icon{font-size:40px;margin-bottom:10px;display:block;opacity:0.4}
+  .drop-zone h3{font-size:15px;font-weight:500;margin-bottom:4px}
+  .drop-zone p{font-size:13px;color:var(--text-muted)}
+  .scanning{display:none;align-items:center;gap:10px;padding:12px 16px;background:var(--blue-bg);border-radius:var(--radius);color:var(--blue-text);font-size:13px;margin-bottom:12px;font-weight:500}
+  .scanning.on{display:flex}
+  .saving{display:none;align-items:center;gap:10px;padding:10px 14px;background:var(--green-bg);border-radius:var(--radius);color:var(--green-text);font-size:13px;margin-top:8px}
+  .saving.on{display:flex}
+  .dots{display:flex;gap:4px}
+  .dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:bl 1.2s infinite}
+  .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+  @keyframes bl{0%,80%,100%{opacity:.2}40%{opacity:1}}
+  .field{margin-bottom:12px}
+  .field label{font-size:11px;color:var(--text-muted);font-weight:700;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:5px}
+  .field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-family:inherit;font-size:14px;color:var(--text);background:var(--surface);outline:none;transition:border-color 0.15s}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+  .field textarea{resize:vertical;min-height:64px}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .full{grid-column:1/-1}
+  .row{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+  .btn{padding:10px 18px;border-radius:var(--radius);cursor:pointer;font-size:14px;font-family:inherit;font-weight:500;display:inline-flex;align-items:center;gap:6px;border:none;transition:opacity 0.15s,transform 0.1s}
+  .btn:active{transform:scale(0.97)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-outline{background:transparent;border:1px solid var(--border-strong);color:var(--text)}
+  .btn-green{background:var(--green-bg);color:var(--green-text)}
+  .btn-red{background:var(--red-bg);color:var(--red-text)}
+  .btn-sm{padding:7px 13px;font-size:13px}
+  .ai-badge{display:inline-flex;align-items:center;gap:4px;background:var(--blue-bg);color:var(--blue-text);font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.3px}
+  .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px}
+  .stat-label{font-size:11px;color:var(--text-muted);font-weight:700;letter-spacing:0.3px;margin-bottom:4px}
+  .stat-val{font-size:22px;font-weight:700}
+  .list-item{padding:12px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center}
+  .list-item:last-child{border-bottom:none;padding-bottom:0}
+  .thumb{width:38px;height:38px;border-radius:var(--radius);object-fit:cover;border:1px solid var(--border);flex-shrink:0}
+  .thumb-ph{width:38px;height:38px;border-radius:var(--radius);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .item-name{font-weight:500;font-size:14px}
+  .item-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
+  .pill{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+  .pill-pending{background:var(--amber-bg);color:var(--amber-text)}
+  .pill-step2{background:var(--blue-bg);color:var(--blue-text)}
+  .pill-approved{background:var(--green-bg);color:var(--green-text)}
+  .pill-rejected{background:var(--red-bg);color:var(--red-text)}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;justify-content:center}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:20px;animation:slideUp 0.2s ease}
+  @keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .modal-handle{width:40px;height:4px;background:var(--border-strong);border-radius:4px;margin:0 auto 16px}
+  .detail-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;gap:12px}
+  .detail-row:last-of-type{border-bottom:none}
+  .detail-label{color:var(--text-muted);flex-shrink:0}
+  .detail-val{text-align:right;font-weight:500}
+  .flow{display:flex;align-items:center;gap:4px;margin:10px 0;font-size:12px;flex-wrap:wrap}
+  .fs{padding:4px 10px;border-radius:20px;border:1px solid var(--border-strong);color:var(--text-muted)}
+  .fs.done{background:var(--green-bg);color:var(--green-text);border-color:transparent}
+  .fs.cur{background:var(--blue-bg);color:var(--blue-text);border-color:transparent;font-weight:700}
+  .fa{color:var(--text-hint);font-size:12px}
+  .toast-wrap{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:200;pointer-events:none}
+  .toast{background:var(--accent);color:#fff;padding:10px 20px;border-radius:40px;font-size:13px;font-weight:500;display:none;white-space:nowrap}
+  .empty{text-align:center;padding:32px 0;color:var(--text-muted);font-size:13px}
+  .empty .e-icon{font-size:36px;display:block;margin-bottom:8px;opacity:0.4}
+  .reload-btn{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer;margin-bottom:10px}
+  .reload-btn:hover{color:var(--text)}
+</style>
+</head>
+<body>
+
+<header>
+  <span style="font-size:22px">🧾</span>
+  <div class="logo">経費精算 <span>/ Google スプレッドシート連携版</span></div>
+</header>
+
+<div class="main">
+
+  <!-- GAS URL設定バナー -->
+  <div class="gas-banner" id="gas-banner">
+    <strong>⚙️ 初回設定：Google Apps Script の URL を入力してください</strong>
+    <br><span style="font-size:12px">Apps Script をデプロイして発行されたウェブアプリURLを貼り付けてください</span>
+    <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/..." />
+    <button class="save-btn" onclick="saveGasUrl()">保存して接続</button>
+  </div>
+  <div class="connected-badge" id="connected-badge">
+    ✅ <strong>スプレッドシート接続済み</strong> — データは自動で保存されます
+    <button onclick="resetGasUrl()" style="margin-left:auto;background:none;border:none;color:var(--green-text);cursor:pointer;font-size:12px">変更</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="sw('scan')" id="tab-scan">📷 申請</div>
+    <div class="tab" onclick="sw('approve')" id="tab-approve">
+      ✅ 承認<div class="badge" id="nd">0</div>
+    </div>
+    <div class="tab" onclick="sw('list')" id="tab-list">📋 一覧</div>
+  </div>
+
+  <!-- 申請タブ -->
+  <div class="view active" id="view-scan">
+    <div class="card">
+      <div class="drop-zone" id="dz" onclick="document.getElementById('fi').click()" ondragover="dzEv(event,true)" ondragleave="dzEv(event,false)" ondrop="dzDrop(event)">
+        <input type="file" id="fi" accept="image/*" capture="environment" style="display:none" onchange="onFile(this.files[0])">
+        <span class="icon">📷</span>
+        <h3>領収書を撮影 / アップロード</h3>
+        <p>タップしてカメラを起動、またはファイルをドロップ</p>
+      </div>
+      <img id="prev" alt="領収書プレビュー" style="max-width:100%;max-height:200px;border-radius:10px;border:1px solid var(--border);display:none;margin:12px auto 0">
+    </div>
+
+    <div class="scanning" id="scan-msg">
+      <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      AIが領収書を読み取り中...
+    </div>
+
+    <div id="form-area" style="display:none">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="font-weight:700;font-size:15px">申請内容の確認</div>
+          <div class="ai-badge">✨ AI自動入力</div>
+        </div>
+        <div class="g2">
+          <div class="field"><label>申請者名</label><input type="text" id="f-name" placeholder="田中 太郎"></div>
+          <div class="field"><label>日付</label><input type="date" id="f-date"></div>
+          <div class="field"><label>カテゴリ</label>
+            <select id="f-cat">
+              <option>交通費</option><option>出張費</option><option>備品・消耗品</option><option>接待・会食費</option><option>その他</option>
+            </select>
+          </div>
+          <div class="field"><label>金額（円）</label><input type="number" id="f-amount" placeholder="0"></div>
+          <div class="field full"><label>店舗・支払先</label><input type="text" id="f-store" placeholder="コインパーキング〇〇"></div>
+          <div class="field full"><label>使用目的</label><textarea id="f-desc" placeholder="〇〇現場への訪問時の駐車代"></textarea></div>
+        </div>
+        <div class="saving" id="saving-msg">
+          <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+          スプレッドシートに保存中...
+        </div>
+        <div class="row">
+          <button class="btn btn-outline btn-sm" onclick="resetScan()">↩ 別の領収書</button>
+          <button class="btn btn-primary btn-sm" onclick="submitForm()">申請する →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 承認タブ -->
+  <div class="view" id="view-approve">
+    <div class="stat-row">
+      <div class="stat"><div class="stat-label">1次待ち</div><div class="stat-val" id="s-p1" style="color:var(--amber-text)">0</div></div>
+      <div class="stat"><div class="stat-label">2次待ち</div><div class="stat-val" id="s-p2" style="color:var(--blue-text)">0</div></div>
+      <div class="stat"><div class="stat-label">承認済み</div><div class="stat-val" id="s-done" style="color:var(--green-text)">0</div></div>
+    </div>
+    <div onclick="loadAll()" class="reload-btn">🔄 最新データを読み込む</div>
+    <div class="card" id="approve-list"><div class="empty"><span class="e-icon">✅</span>承認待ちの申請はありません</div></div>
+  </div>
+
+  <!-- 一覧タブ -->
+  <div class="view" id="view-list">
+    <div class="stat-row">
+      <div class="stat"><div class="stat-label">総申請数</div><div class="stat-val" id="s-total">0</div></div>
+      <div class="stat"><div class="stat-label">承認済み合計</div><div class="stat-val" id="s-sum" style="font-size:15px;padding-top:4px">¥0</div></div>
+      <div class="stat"><div class="stat-label">却下数</div><div class="stat-val" id="s-rej" style="color:var(--red-text)">0</div></div>
+    </div>
+    <div onclick="loadAll()" class="reload-btn">🔄 最新データを読み込む</div>
+    <div class="card" id="all-list"><div class="empty"><span class="e-icon">📋</span>申請はまだありません</div></div>
+  </div>
+</div>
+
+<!-- モーダル -->
+<div class="modal-bg" id="modal-bg" onclick="bgClick(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="modal-body"></div>
+    <div id="modal-btns" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"></div>
+  </div>
+</div>
+
+<div class="toast-wrap"><div class="toast" id="toast"></div></div>
+
+<script>
+let reqs=[], nid=Date.now(), curImg=null;
+
+function today(){return new Date().toISOString().slice(0,10)}
+document.getElementById('f-date').value=today();
+
+// GAS URL管理
+let gasUrl = localStorage.getItem('gasUrl')||'';
+function initBanner(){
+  if(gasUrl){
+    document.getElementById('gas-banner').style.display='none';
+    document.getElementById('connected-badge').classList.add('on');
+    loadAll();
+  } else {
+    document.getElementById('gas-banner').style.display='block';
+    document.getElementById('connected-badge').classList.remove('on');
+  }
+}
+function saveGasUrl(){
+  const v=document.getElementById('gas-url-input').value.trim();
+  if(!v){toast('URLを入力してください');return;}
+  gasUrl=v; localStorage.setItem('gasUrl',v);
+  initBanner(); toast('接続しました ✓');
+}
+function resetGasUrl(){
+  gasUrl=''; localStorage.removeItem('gasUrl'); initBanner();
+}
+initBanner();
+
+function sw(t){
+  ['scan','approve','list'].forEach((v,i)=>{
+    document.getElementById('view-'+v).classList.toggle('active',v===t);
+    document.querySelectorAll('.tab')[i].classList.toggle('active',v===t);
+  });
+  if(t==='approve')renderApprove();
+  if(t==='list')renderList();
+}
+
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.style.display='block';
+  setTimeout(()=>el.style.display='none',2400);
+}
+
+function updateBadge(){
+  const n=reqs.filter(r=>r.status==='pending'||r.status==='1次承認待ち'||r.status==='2次承認待ち').length;
+  const d=document.getElementById('nd');
+  d.textContent=n; d.classList.toggle('on',n>0);
+}
+
+async function gasPost(body){
+  if(!gasUrl) return null;
+  try{
+    const res=await fetch(gasUrl,{method:'POST',body:JSON.stringify(body)});
+    return await res.json();
+  }catch(e){
+    console.error(e); return null;
+  }
+}
+
+async function loadAll(){
+  if(!gasUrl)return;
+  const res=await gasPost({action:'getAll'});
+  if(res&&res.data){
+    reqs=res.data.map(r=>({
+      id:r.id, name:r.name, date:r.date, cat:r.cat,
+      store:r.store, amount:Number(r.amount), desc:r.desc,
+      status: normalizeStatus(r.status), step:Number(r.step)||1,
+      image:null
+    }));
+    updateBadge(); renderApprove(); renderList();
+  }
+}
+
+function normalizeStatus(s){
+  if(s==='承認済み')return'approved';
+  if(s==='却下')return'rejected';
+  if(s==='2次承認待ち')return'pending';
+  return'pending';
+}
+function normalizeStep(s){
+  if(s==='2次承認待ち')return 2;
+  return 1;
+}
+
+function dzEv(e,on){e.preventDefault();document.getElementById('dz').classList.toggle('drag',on)}
+function dzDrop(e){
+  e.preventDefault();document.getElementById('dz').classList.remove('drag');
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('image/'))onFile(f);
+}
+
+function onFile(file){
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=function(e){
+    const img=document.getElementById('prev');
+    img.src=e.target.result; img.style.display='block';
+    curImg=e.target.result;
+    scanReceipt(e.target.result.split(',')[1],file.type||'image/jpeg');
+  };
+  r.readAsDataURL(file);
+}
+
+async function scanReceipt(b64,mime){
+  document.getElementById('form-area').style.display='none';
+  document.getElementById('scan-msg').classList.add('on');
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:500,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:mime,data:b64}},
+          {type:'text',text:'この領収書の情報をJSONのみで返してください。前後のテキスト不要。\n{"date":"YYYY-MM-DD","amount":数値,"store":"店舗名","category":"交通費|出張費|備品・消耗品|接待・会食費|その他","description":"用途20字以内"}'}
+        ]}]
+      })
+    });
+    const data=await res.json();
+    const txt=(data.content||[]).map(b=>b.text||'').join('');
+    let p;
+    try{p=JSON.parse(txt.replace(/```json|```/g,'').trim())}
+    catch{p={date:today(),amount:'',store:'',category:'その他',description:''}}
+    fillForm(p);
+  }catch{
+    fillForm({date:today(),amount:'',store:'',category:'その他',description:''});
+    toast('読み取り失敗。手動で入力してください');
+  }finally{
+    document.getElementById('scan-msg').classList.remove('on');
+    document.getElementById('form-area').style.display='block';
+  }
+}
+
+function fillForm(d){
+  document.getElementById('f-date').value=d.date||today();
+  document.getElementById('f-amount').value=d.amount||'';
+  document.getElementById('f-store').value=d.store||'';
+  document.getElementById('f-desc').value=d.description||'';
+  const cats=['交通費','出張費','備品・消耗品','接待・会食費','その他'];
+  const i=cats.indexOf(d.category);
+  if(i>=0)document.getElementById('f-cat').selectedIndex=i;
+}
+
+async function submitForm(){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){document.getElementById('f-name').focus();toast('申請者名を入力してください');return;}
+  const amount=parseInt(document.getElementById('f-amount').value)||0;
+  if(!amount){document.getElementById('f-amount').focus();toast('金額を入力してください');return;}
+  const r={
+    id:nid++, name, date:document.getElementById('f-date').value,
+    amount, cat:document.getElementById('f-cat').value,
+    store:document.getElementById('f-store').value.trim(),
+    desc:document.getElementById('f-desc').value.trim(),
+    image:curImg, status:'pending', step:1
+  };
+  // スプレッドシートに保存
+  if(gasUrl){
+    document.getElementById('saving-msg').classList.add('on');
+    await gasPost({action:'submit', ...r});
+    document.getElementById('saving-msg').classList.remove('on');
+  }
+  reqs.unshift(r);
+  updateBadge();
+  toast(gasUrl?'申請してスプレッドシートに保存しました ✓':'申請しました ✓（URL未設定のためローカル保存）');
+  resetScan();
+}
+
+function resetScan(){
+  document.getElementById('prev').style.display='none';
+  document.getElementById('form-area').style.display='none';
+  document.getElementById('scan-msg').classList.remove('on');
+  document.getElementById('fi').value='';
+  ['f-amount','f-store','f-desc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-date').value=today();
+  curImg=null;
+}
+
+function pill(r){
+  if(r.status==='rejected')return'<span class="pill pill-rejected">却下</span>';
+  if(r.status==='approved')return'<span class="pill pill-approved">承認済み</span>';
+  if(r.step===2)return'<span class="pill pill-step2">2次承認待ち</span>';
+  return'<span class="pill pill-pending">1次承認待ち</span>';
+}
+function thumb(r){
+  return r.image
+    ?`<img src="${r.image}" class="thumb" alt="">`
+    :`<div class="thumb-ph">🧾</div>`;
+}
+
+function renderApprove(){
+  const pend=reqs.filter(r=>r.status==='pending');
+  document.getElementById('s-p1').textContent=pend.filter(r=>r.step===1).length;
+  document.getElementById('s-p2').textContent=pend.filter(r=>r.step===2).length;
+  document.getElementById('s-done').textContent=reqs.filter(r=>r.status==='approved').length;
+  const el=document.getElementById('approve-list');
+  if(!pend.length){el.innerHTML='<div class="empty"><span class="e-icon">✅</span>承認待ちの申請はありません</div>';return;}
+  el.innerHTML=pend.map(r=>`
+    <div class="list-item">
+      ${thumb(r)}
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="item-name">${r.name}</span>${pill(r)}
+        </div>
+        <div class="item-meta">${r.date} ／ ${r.cat} ／ ¥${Number(r.amount).toLocaleString()}</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="openModal(${r.id})">詳細</button>
+    </div>`).join('');
+}
+
+function renderList(){
+  document.getElementById('s-total').textContent=reqs.length;
+  const app=reqs.filter(r=>r.status==='approved');
+  document.getElementById('s-sum').textContent='¥'+app.reduce((a,r)=>a+Number(r.amount),0).toLocaleString();
+  document.getElementById('s-rej').textContent=reqs.filter(r=>r.status==='rejected').length;
+  const el=document.getElementById('all-list');
+  if(!reqs.length){el.innerHTML='<div class="empty"><span class="e-icon">📋</span>申請はまだありません</div>';return;}
+  el.innerHTML=reqs.map(r=>`
+    <div class="list-item">
+      ${thumb(r)}
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="item-name">${r.name}</span>${pill(r)}
+        </div>
+        <div class="item-meta">${r.date} ／ ${r.store||r.cat}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-weight:700">¥${Number(r.amount).toLocaleString()}</div>
+        <button class="btn btn-outline btn-sm" style="margin-top:5px" onclick="openModal(${r.id})">詳細</button>
+      </div>
+    </div>`).join('');
+}
+
+function openModal(id){
+  const r=reqs.find(x=>String(x.id)===String(id)); if(!r)return;
+  const s=r.status,st=r.step;
+  const flow=[
+    `<span class="fs done">申請</span><span class="fa">›</span>`,
+    `<span class="fs ${s==='rejected'?'':(st>=2||s==='approved'?'done':'cur')}">1次（上司）</span><span class="fa">›</span>`,
+    `<span class="fs ${s==='approved'?'done':(st===2&&s==='pending'?'cur':'')}">2次（経理）</span><span class="fa">›</span>`,
+    `<span class="fs ${s==='approved'?'done':''}">完了</span>`
+  ].join('');
+  document.getElementById('modal-body').innerHTML=`
+    ${r.image?`<img src="${r.image}" style="max-width:100%;max-height:160px;border-radius:10px;border:1px solid var(--border);display:block;margin-bottom:14px" alt="">`:''}
+    <div class="flow">${flow}</div>
+    <div style="margin-top:12px">
+      <div class="detail-row"><span class="detail-label">申請者</span><span class="detail-val">${r.name}</span></div>
+      <div class="detail-row"><span class="detail-label">日付</span><span class="detail-val">${r.date}</span></div>
+      <div class="detail-row"><span class="detail-label">カテゴリ</span><span class="detail-val">${r.cat}</span></div>
+      <div class="detail-row"><span class="detail-label">店舗</span><span class="detail-val">${r.store||'—'}</span></div>
+      <div class="detail-row"><span class="detail-label">金額</span><span class="detail-val" style="font-size:18px">¥${Number(r.amount).toLocaleString()}</span></div>
+      <div class="detail-row"><span class="detail-label">目的</span><span class="detail-val">${r.desc||'—'}</span></div>
+      <div class="detail-row"><span class="detail-label">ステータス</span><span class="detail-val">${pill(r)}</span></div>
+    </div>`;
+  const btns=document.getElementById('modal-btns');
+  if(r.status==='pending'){
+    const lbl=r.step===1?'1次承認（上司）':'2次承認（経理）';
+    btns.innerHTML=`
+      <button class="btn btn-green" onclick="approve(${r.id})">✓ ${lbl}</button>
+      <button class="btn btn-red" onclick="reject(${r.id})">✕ 却下</button>
+      <button class="btn btn-outline btn-sm" onclick="closeModal()" style="margin-left:auto">閉じる</button>`;
+  }else{
+    btns.innerHTML=`<button class="btn btn-outline" onclick="closeModal()" style="margin-left:auto">閉じる</button>`;
+  }
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function bgClick(e){if(e.target===document.getElementById('modal-bg'))closeModal()}
+function closeModal(){document.getElementById('modal-bg').classList.remove('open')}
+
+async function approve(id){
+  const r=reqs.find(x=>String(x.id)===String(id)); if(!r)return;
+  if(r.step===1){r.step=2;toast('1次承認しました')}
+  else{r.status='approved';toast('最終承認完了 ✓')}
+  if(gasUrl)await gasPost({action:'approve',id:r.id});
+  closeModal(); updateBadge(); renderApprove();
+}
+
+async function reject(id){
+  const r=reqs.find(x=>String(x.id)===String(id)); if(!r)return;
+  r.status='rejected'; toast('却下しました');
+  if(gasUrl)await gasPost({action:'reject',id:r.id});
+  closeModal(); updateBadge(); renderApprove();
+}
+</script>
+</body>
+</html>
