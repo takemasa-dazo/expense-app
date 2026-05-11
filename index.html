@@ -69,6 +69,10 @@
   .empty-draft .e-icon{font-size:32px;display:block;margin-bottom:6px;opacity:0.35}
   .toast-wrap{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:200;pointer-events:none}
   .toast{background:var(--accent);color:#fff;padding:10px 20px;border-radius:40px;font-size:13px;font-weight:500;display:none;white-space:nowrap}
+  .choice-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .choice-btn{padding:14px;border:2px solid var(--border-strong);border-radius:var(--radius-lg);background:var(--surface);cursor:pointer;font-family:inherit;font-size:14px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .choice-btn:hover{background:var(--bg)}
+  .choice-btn .cb-icon{font-size:28px}
 </style>
 </head>
 <body>
@@ -96,11 +100,15 @@
         <span style="font-size:12px;color:var(--text-muted);font-weight:700;white-space:nowrap">お名前</span>
         <input type="text" id="applicant-name" placeholder="田中 太郎（一度入力すれば保存）" style="flex:1;padding:8px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-family:inherit;font-size:13px;outline:none" oninput="localStorage.setItem('applicantName',this.value)">
       </div>
-      <div class="drop-zone" id="dz" onclick="document.getElementById('fi').click()" ondragover="dzEv(event,true)" ondragleave="dzEv(event,false)" ondrop="dzDrop(event)">
-        <input type="file" id="fi" accept="image/*" capture="environment" style="display:none" onchange="onFile(this.files[0])">
-        <span class="icon">📷</span>
-        <h3>領収書を撮影 / アップロード</h3>
-        <p>タップしてカメラ起動 / ファイルをドロップ</p>
+      <input type="file" id="fi-camera" accept="image/*" capture="environment" style="display:none" onchange="onFile(this.files[0])">
+      <input type="file" id="fi-library" accept="image/*" style="display:none" onchange="onFile(this.files[0])">
+      <div class="choice-btns">
+        <button class="choice-btn" onclick="document.getElementById('fi-camera').click()">
+          <span class="cb-icon">📷</span>今すぐ撮影
+        </button>
+        <button class="choice-btn" onclick="document.getElementById('fi-library').click()">
+          <span class="cb-icon">🖼️</span>フォルダから選ぶ
+        </button>
       </div>
       <div class="scanning" id="scan-msg"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>AIが読み取り中...</div>
     </div>
@@ -143,8 +151,6 @@ function sw(t){['scan','draft'].forEach((v,i)=>{document.getElementById('view-'+
 function today(){return new Date().toISOString().slice(0,10);}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',2400);}
 function updateDraftBadge(){const n=drafts.length;const b=document.getElementById('draft-badge');b.textContent=n;b.classList.toggle('on',n>0);document.getElementById('submit-all-btn').disabled=n===0;}
-function dzEv(e,on){e.preventDefault();document.getElementById('dz').classList.toggle('drag',on);}
-function dzDrop(e){e.preventDefault();document.getElementById('dz').classList.remove('drag');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))onFile(f);}
 function onFile(file){if(!file)return;const r=new FileReader();r.onload=function(e){curImg=e.target.result;document.getElementById('prev-thumb-wrap').innerHTML=`<img src="${curImg}" class="preview-thumb" alt="">`;document.getElementById('preview-card').classList.remove('on');scanReceipt(e.target.result.split(',')[1],file.type||'image/jpeg');};r.readAsDataURL(file);}
 async function scanReceipt(b64,mime){
   document.getElementById('scan-msg').classList.add('on');document.getElementById('preview-card').classList.remove('on');
@@ -154,7 +160,7 @@ async function scanReceipt(b64,mime){
   finally{document.getElementById('scan-msg').classList.remove('on');document.getElementById('preview-card').classList.add('on');}
 }
 function fillPreview(d){document.getElementById('p-date').value=d.date||today();document.getElementById('p-amount').value=d.amount||'';document.getElementById('p-store').value=d.store||'';document.getElementById('p-desc').value=d.description||'';const cats=['交通費','出張費','備品・消耗品','接待・会食費','その他'];const i=cats.indexOf(d.category);if(i>=0)document.getElementById('p-cat').selectedIndex=i;}
-function addToDraft(){const amount=parseInt(document.getElementById('p-amount').value)||0;if(!amount){toast('金額を入力してください');return;}drafts.push({id:nid++,name:document.getElementById('applicant-name').value.trim()||'未入力',date:document.getElementById('p-date').value,amount,cat:document.getElementById('p-cat').value,store:document.getElementById('p-store').value.trim(),desc:document.getElementById('p-desc').value.trim(),image:curImg,status:'pending',step:1});curImg=null;document.getElementById('preview-card').classList.remove('on');document.getElementById('fi').value='';updateDraftBadge();toast(`リストに追加（${drafts.length}件）`);sw('draft');}
+function addToDraft(){const amount=parseInt(document.getElementById('p-amount').value)||0;if(!amount){toast('金額を入力してください');return;}drafts.push({id:nid++,name:document.getElementById('applicant-name').value.trim()||'未入力',date:document.getElementById('p-date').value,amount,cat:document.getElementById('p-cat').value,store:document.getElementById('p-store').value.trim(),desc:document.getElementById('p-desc').value.trim(),image:curImg,status:'pending',step:1});curImg=null;document.getElementById('preview-card').classList.remove('on');document.getElementById('fi-camera').value='';document.getElementById('fi-library').value='';updateDraftBadge();toast(`リストに追加（${drafts.length}件）`);sw('draft');}
 function renderDraft(){const el=document.getElementById('draft-list');document.getElementById('draft-count-label').textContent=drafts.length+'件';if(!drafts.length){el.innerHTML='<div class="empty-draft"><span class="e-icon">📋</span>領収書を撮影してリストに追加してください</div>';document.getElementById('total-row').style.display='none';return;}const total=drafts.reduce((a,r)=>a+r.amount,0);document.getElementById('total-amount').textContent='¥'+total.toLocaleString();document.getElementById('total-row').style.display='flex';el.innerHTML=drafts.map((r,i)=>`<div class="draft-item">${r.image?`<img src="${r.image}" class="draft-thumb" alt="">`:`<div class="draft-thumb-ph">🧾</div>`}<div class="draft-info"><div class="draft-name">${r.store||r.cat}</div><div class="draft-meta">${r.date} ／ ${r.cat}</div></div><div class="draft-amount">¥${r.amount.toLocaleString()}</div><button class="delete-btn" onclick="removeDraft(${i})">✕</button></div>`).join('');}
 function removeDraft(i){drafts.splice(i,1);updateDraftBadge();renderDraft();}
 async function submitAll(){if(!drafts.length)return;const btn=document.getElementById('submit-all-btn');btn.disabled=true;document.getElementById('sending-msg').classList.add('on');for(const r of drafts){if(gasUrl)await gasPost({action:'submit',...r});}document.getElementById('sending-msg').classList.remove('on');const count=drafts.length;drafts=[];updateDraftBadge();renderDraft();toast(`${count}件まとめて申請しました ✓`);}
