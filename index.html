@@ -39,21 +39,34 @@
   .preview-fields{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .pf{display:flex;flex-direction:column;gap:3px}
   .pf label{font-size:10px;color:var(--text-muted);font-weight:700;letter-spacing:0.3px;text-transform:uppercase}
-  .pf input,.pf select{padding:6px 8px;border:1px solid var(--border-strong);border-radius:8px;font-family:inherit;font-size:13px;color:var(--text);background:var(--surface);outline:none;width:100%}
+  .pf input,.pf select,.pf textarea{padding:6px 8px;border:1px solid var(--border-strong);border-radius:8px;font-family:inherit;font-size:13px;color:var(--text);background:var(--surface);outline:none;width:100%}
+  .pf textarea{resize:none;min-height:52px}
   .pf.full{grid-column:1/-1}
   .add-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-family:inherit;font-weight:700;cursor:pointer;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:6px}
   .draft-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
   .draft-title{font-weight:700;font-size:15px}
   .draft-count{background:var(--amber-bg);color:var(--amber-text);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:700}
-  .draft-item{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+  .draft-item{padding:10px 0;border-bottom:1px solid var(--border)}
   .draft-item:last-child{border-bottom:none;padding-bottom:0}
+  .draft-item-row{display:flex;gap:10px;align-items:center}
   .draft-thumb{width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid var(--border);flex-shrink:0}
   .draft-thumb-ph{width:36px;height:36px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
   .draft-info{flex:1;min-width:0}
   .draft-name{font-weight:500;font-size:13px}
   .draft-meta{font-size:12px;color:var(--text-muted);margin-top:1px}
   .draft-amount{font-weight:700;font-size:14px;flex-shrink:0}
-  .delete-btn{background:none;border:none;color:var(--text-hint);cursor:pointer;font-size:18px;padding:0 4px;flex-shrink:0}
+  .item-btns{display:flex;gap:4px;flex-shrink:0}
+  .edit-btn{background:var(--blue-bg);border:none;color:var(--blue-text);cursor:pointer;font-size:12px;padding:4px 8px;border-radius:6px;font-family:inherit;font-weight:500}
+  .delete-btn{background:none;border:none;color:var(--text-hint);cursor:pointer;font-size:18px;padding:0 4px}
+  .edit-form{display:none;margin-top:10px;background:var(--bg);border-radius:var(--radius);padding:12px}
+  .edit-form.on{display:block}
+  .edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .ef{display:flex;flex-direction:column;gap:3px}
+  .ef label{font-size:10px;color:var(--text-muted);font-weight:700;letter-spacing:0.3px;text-transform:uppercase}
+  .ef input,.ef select,.ef textarea{padding:6px 8px;border:1px solid var(--border-strong);border-radius:8px;font-family:inherit;font-size:13px;color:var(--text);background:var(--surface);outline:none;width:100%}
+  .ef textarea{resize:none;min-height:52px}
+  .ef.full{grid-column:1/-1}
+  .save-edit-btn{width:100%;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-family:inherit;font-weight:700;cursor:pointer;margin-top:8px}
   .total-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-size:13px;color:var(--text-muted);border-top:1px solid var(--border);margin-top:4px}
   .total-amount{font-size:18px;font-weight:700;color:var(--text)}
   .submit-all-btn{width:100%;padding:14px;background:#1a7d3a;color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-family:inherit;font-weight:700;cursor:pointer;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px}
@@ -62,8 +75,7 @@
   .sending.on{display:flex}
   .empty-draft{text-align:center;padding:24px 0;color:var(--text-muted);font-size:13px}
   .empty-draft .e-icon{font-size:32px;display:block;margin-bottom:6px;opacity:0.35}
-  .saved-badge{background:var(--green-bg);color:var(--green-text);border-radius:var(--radius);padding:8px 12px;font-size:12px;margin-bottom:10px;display:none;align-items:center;gap:6px}
-  .saved-badge.on{display:flex}
+  .saved-badge{background:var(--green-bg);color:var(--green-text);border-radius:var(--radius);padding:8px 12px;font-size:12px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
   .toast-wrap{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:200;pointer-events:none}
   .toast{background:var(--accent);color:#fff;padding:10px 20px;border-radius:40px;font-size:13px;font-weight:500;display:none;white-space:nowrap}
   .choice-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
@@ -114,14 +126,14 @@
           <div class="pf"><label>金額（円）</label><input type="number" id="p-amount" placeholder="0"></div>
           <div class="pf"><label>カテゴリ</label><select id="p-cat"><option>交通費</option><option>出張費</option><option>備品・消耗品</option><option>接待・会食費</option><option>その他</option></select></div>
           <div class="pf"><label>店舗</label><input type="text" id="p-store" placeholder="店舗名"></div>
-          <div class="pf full"><label>使用目的</label><input type="text" id="p-desc" placeholder="〇〇現場の駐車代"></div>
+          <div class="pf full"><label>使用目的・メモ</label><textarea id="p-desc" placeholder="例：電球3個、〇〇現場用"></textarea></div>
         </div>
       </div>
       <button class="add-btn" onclick="addToDraft()">＋ リストに追加して保存</button>
     </div>
   </div>
   <div class="view" id="view-draft">
-    <div class="saved-badge on">💾 リストはこのスマホに自動保存されています</div>
+    <div class="saved-badge">💾 リストはこのスマホに自動保存されています</div>
     <div class="card">
       <div class="draft-header"><div class="draft-title">一時保存リスト</div><div class="draft-count" id="draft-count-label">0件</div></div>
       <div id="draft-list"><div class="empty-draft"><span class="e-icon">📋</span>領収書を撮影してリストに追加してください<br><span style="font-size:12px;margin-top:4px;display:block">ページを閉じても保存されます</span></div></div>
@@ -159,7 +171,42 @@ async function scanReceipt(b64,mime){
 }
 function fillPreview(d){document.getElementById('p-date').value=d.date||today();document.getElementById('p-amount').value=d.amount||'';document.getElementById('p-store').value=d.store||'';document.getElementById('p-desc').value=d.description||'';const cats=['交通費','出張費','備品・消耗品','接待・会食費','その他'];const i=cats.indexOf(d.category);if(i>=0)document.getElementById('p-cat').selectedIndex=i;}
 function addToDraft(){const amount=parseInt(document.getElementById('p-amount').value)||0;if(!amount){toast('金額を入力してください');return;}drafts.push({id:nid++,name:document.getElementById('applicant-name').value.trim()||'未入力',date:document.getElementById('p-date').value,amount,cat:document.getElementById('p-cat').value,store:document.getElementById('p-store').value.trim(),desc:document.getElementById('p-desc').value.trim(),image:curImg,status:'pending',step:1});saveDrafts();curImg=null;document.getElementById('preview-card').classList.remove('on');document.getElementById('fi-camera').value='';document.getElementById('fi-library').value='';updateDraftBadge();toast(`保存しました（合計${drafts.length}件）💾`);sw('draft');}
-function renderDraft(){const el=document.getElementById('draft-list');document.getElementById('draft-count-label').textContent=drafts.length+'件';if(!drafts.length){el.innerHTML='<div class="empty-draft"><span class="e-icon">📋</span>領収書を撮影してリストに追加してください<br><span style="font-size:12px;margin-top:4px;display:block">ページを閉じても保存されます</span></div>';document.getElementById('total-row').style.display='none';return;}const total=drafts.reduce((a,r)=>a+r.amount,0);document.getElementById('total-amount').textContent='¥'+total.toLocaleString();document.getElementById('total-row').style.display='flex';el.innerHTML=drafts.map((r,i)=>`<div class="draft-item">${r.image?`<img src="${r.image}" class="draft-thumb" alt="">`:`<div class="draft-thumb-ph">🧾</div>`}<div class="draft-info"><div class="draft-name">${r.store||r.cat}</div><div class="draft-meta">${r.date} ／ ${r.cat}</div></div><div class="draft-amount">¥${r.amount.toLocaleString()}</div><button class="delete-btn" onclick="removeDraft(${i})">✕</button></div>`).join('');}
+function renderDraft(){
+  const el=document.getElementById('draft-list');
+  document.getElementById('draft-count-label').textContent=drafts.length+'件';
+  if(!drafts.length){el.innerHTML='<div class="empty-draft"><span class="e-icon">📋</span>領収書を撮影してリストに追加してください<br><span style="font-size:12px;margin-top:4px;display:block">ページを閉じても保存されます</span></div>';document.getElementById('total-row').style.display='none';return;}
+  const total=drafts.reduce((a,r)=>a+r.amount,0);
+  document.getElementById('total-amount').textContent='¥'+total.toLocaleString();
+  document.getElementById('total-row').style.display='flex';
+  const cats=['交通費','出張費','備品・消耗品','接待・会食費','その他'];
+  el.innerHTML=drafts.map((r,i)=>`
+    <div class="draft-item" id="item-${i}">
+      <div class="draft-item-row">
+        ${r.image?`<img src="${r.image}" class="draft-thumb" alt="">`:`<div class="draft-thumb-ph">🧾</div>`}
+        <div class="draft-info">
+          <div class="draft-name">${r.store||r.cat}</div>
+          <div class="draft-meta">${r.date} ／ ${r.cat}${r.desc?` ／ ${r.desc}`:''}</div>
+        </div>
+        <div class="draft-amount">¥${r.amount.toLocaleString()}</div>
+        <div class="item-btns">
+          <button class="edit-btn" onclick="toggleEdit(${i})">編集</button>
+          <button class="delete-btn" onclick="removeDraft(${i})">✕</button>
+        </div>
+      </div>
+      <div class="edit-form" id="edit-form-${i}">
+        <div class="edit-grid">
+          <div class="ef"><label>日付</label><input type="date" id="e-date-${i}" value="${r.date}"></div>
+          <div class="ef"><label>金額（円）</label><input type="number" id="e-amount-${i}" value="${r.amount}"></div>
+          <div class="ef"><label>カテゴリ</label><select id="e-cat-${i}">${cats.map(c=>`<option${c===r.cat?' selected':''}>${c}</option>`).join('')}</select></div>
+          <div class="ef"><label>店舗</label><input type="text" id="e-store-${i}" value="${r.store||''}"></div>
+          <div class="ef full"><label>使用目的・メモ</label><textarea id="e-desc-${i}" placeholder="例：電球3個、〇〇現場用">${r.desc||''}</textarea></div>
+        </div>
+        <button class="save-edit-btn" onclick="saveEdit(${i})">✓ 修正を保存</button>
+      </div>
+    </div>`).join('');
+}
+function toggleEdit(i){document.getElementById('edit-form-'+i).classList.toggle('on');}
+function saveEdit(i){const amount=parseInt(document.getElementById('e-amount-'+i).value)||0;if(!amount){toast('金額を入力してください');return;}drafts[i].date=document.getElementById('e-date-'+i).value;drafts[i].amount=amount;drafts[i].cat=document.getElementById('e-cat-'+i).value;drafts[i].store=document.getElementById('e-store-'+i).value.trim();drafts[i].desc=document.getElementById('e-desc-'+i).value.trim();saveDrafts();renderDraft();toast('修正しました ✓');}
 function removeDraft(i){drafts.splice(i,1);saveDrafts();updateDraftBadge();renderDraft();}
 async function submitAll(){if(!drafts.length)return;const btn=document.getElementById('submit-all-btn');btn.disabled=true;document.getElementById('sending-msg').classList.add('on');for(const r of drafts){if(gasUrl)await gasPost({action:'submit',...r});}document.getElementById('sending-msg').classList.remove('on');const count=drafts.length;drafts=[];saveDrafts();updateDraftBadge();renderDraft();toast(`${count}件まとめて申請しました ✓`);}
 async function gasPost(body){if(!gasUrl)return null;try{const res=await fetch(gasUrl,{method:'POST',body:JSON.stringify(body)});return await res.json();}catch(e){return null;}}
